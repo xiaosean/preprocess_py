@@ -25,4 +25,14 @@ step4:
 step5:
 	Date_Aggregate_week
 		sum weekday and holiday
+step5:
+	concat_table
+		
+step6:
+	downsample
 
+step7:
+	normalize
+
+optional:
+	slice column for analyze 
