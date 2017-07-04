@@ -14,19 +14,20 @@ from bokeh.models import LinearAxis, Range1d
 
 output_filename = "./kmeans_error_graph/"
 
-data =  ast.literal_eval(sys.argv[1])
+data = ast.literal_eval(sys.argv[1])
 
 df = pd.DataFrame()
 df['K_clusters'] = list(data.keys())
 df['error'] = list(data.values())
 
-p = figure(toolbar_location = "right", title = "K clusters performence")
+# p = figure(toolbar_location = "right", title = "K clusters performence")
+p = figure(toolbar_location = "right", title = str(sys.argv[2]).replace("_", " "))
 p.line(list(df['K_clusters'].values), df['error'].values, line_width = 2)
 p.circle(df['K_clusters'].values, df['error'].values, fill_color = "white", size = 8)
 p.xaxis.axis_label_text_font_size = '20px'
 p.yaxis.axis_label_text_font_size = '20px'
 p.xaxis.axis_label = "K_clusters"
-p.yaxis.axis_label = "error"
+p.yaxis.axis_label = "sum of square error"
 p.title.text_font_size = '30px'
 output_file(output_filename + "K_cluster_error_" + sys.argv[2] + ".html")
 save(p)

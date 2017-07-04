@@ -11,7 +11,7 @@ from bokeh.palettes import Spectral11, Category10
 # set configure
 # path = "./CDR_NORMALIZE_CONCAT/"
 path = "./CDR_FINAL/"
-filename = "hours_divide.csv"
+filename = "0703normalize_65_cols.csv"
 # path = "./CDR_ANALYZE/"
 # path = "./CDR_CONCAT/"
 # filename = sys.argv[1]
@@ -46,7 +46,7 @@ groups_name = ['1', '2', '3', '4', '5', '6', '7', '8', 'seldom', 'None']
 # groups_name = ['1', '2', '3', '4', '5', '6', '7', '8']
 
 # Ks = [8, 7, 6, 7, 5, 6, 6, 8, 7, 7]
-Ks = [6, 5, 5, 5, 5, 5, 5, 5]
+Ks = [6, 4, 6, 7, 7, 6, 8, 7, 7, 7]
 
 evening = "Evening user"
 moring = "Morning user"
@@ -67,7 +67,7 @@ cluster_name = [
 	{106596:dinner, 124046:moring, 146613:midnight, 21343:lunch, 91568:afternoon}
 ]
 
-norm = "06281"
+norm = "0704"
 
 df_src['Groups'] = df_group['Groups']
 
@@ -79,7 +79,8 @@ for j in range(8):
 	df = df_src[df_src['Groups'] == group]
 
 	label_path = "./kmean_label/"
-	label_name = "label_K" + str(K) + "_de_with_kid_" + group + "_" + norm + ".npy"
+	# label_name = "label_K" + str(K) + "_de_with_kid_" + group + "_" + norm + ".npy"
+	label_name = "label_K" + str(K) + "__" + group + "_" + norm + ".npy"
 	labels_ = np.load(label_path + label_name)
 
 	# df.loc['label',list(map(str, df.index))] = labels_
@@ -112,8 +113,8 @@ for j in range(8):
 		# 	# data[cluster_name[cluster_result[i]] + "(" + str(cluster_result[i]) + ")"] = list(map(lambda x: x/4,grouped.mean().values[i]))
 		# 	data["(" + str(group_count[i]) + ")"] = list(map(lambda x: x/4, group_mean.values[i][1:]))
 
-		data[cluster_name[j][group_count[i]] + "(" + str(group_count[i]) + ")"] = group_mean.values[i]
-		# data["(" + str(group_count[i]) + ")"] = group_mean.values[i]
+		# data[cluster_name[j][group_count[i]] + "(" + str(group_count[i]) + ")"] = group_mean.values[i]
+		data["(" + str(group_count[i]) + ")"] = group_mean.values[i]
 		# data[str(cluster_name[i])] = grouped.mean().values[i]
 
 	pp.pprint(df.columns[1:-2])
@@ -122,10 +123,10 @@ for j in range(8):
 	# xl = str(df.columns)
 	# xl = "MO_0_24 MT_0_24 MO_SUN_SAT_w_h MT_SUN_SAT_w_h"
 	xl = "hour"
-	if filename.find("WORK") != -1:
-		xl = str(df.columns[1:])
-	elif filename.find("hours") == -1:
-		xl = "SUN      ~      SAT"
+	# if filename.find("WORK") != -1:
+	# 	xl = str(df.columns[1:])
+	# elif filename.find("hours") == -1:
+	# 	xl = "SUN      ~      SAT"
 
 	# yl = "time"
 	# if filename.find("TIME") == -1:

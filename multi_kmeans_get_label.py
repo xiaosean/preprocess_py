@@ -26,6 +26,8 @@ relative_filename = path + filename  #+ ".csv"
 
 label_output_path = "./kmean_label/"
 
+date = "0704"
+
 # read revise csv file and print cost time
 # just load 5 data 
 t0 = time()
@@ -62,18 +64,21 @@ for K in range(2, 15):
 	# np.save(label_output_path + "label_K" + str(K) + "_log10.npy", kmeans.labels_)
 	# np.save(label_output_path + "label_K" + str(K) + "_znorm.npy", kmeans.labels_)
 	# np.save(label_output_path + "label_K" + str(K) + "_" + filename[14:-4] + ".npy", kmeans.labels_)
-	np.save(label_output_path + "label_K" + str(K) + "_" + filename[14:-4] + "_06281.npy", kmeans.labels_)
-	np.save(label_output_path + "center_K" + str(K) + "_" + filename[14:-4] + "_06281.npy", kmeans.cluster_centers_)
+	np.save(label_output_path + "label_K" + str(K) + "_" + filename[14:-4] + "_" + date + ".npy", kmeans.labels_)
+	# np.save(label_output_path + "center_K" + str(K) + "_" + filename[14:-4] + "_06281.npy", kmeans.cluster_centers_)
 	# np.save(label_output_path + "label_K" + str(K) + "_mini.npy", kmeans.labels_)
 	scores[K] = kmeans.inertia_
-	print("time for kmean %d: %.2f" % (K, time()-t0))
+	print("time for kmean %d %s: %.2f" % (K, filename, time()-t0))
 	print(kmeans.inertia_)
 
+	t0 = time()
 	sum_of_square = 0
 	for i in range(len(df)):
 		sum_of_square += np.sum((kmeans.cluster_centers_[:] - rows[i].values[:])**2)
 
 	scores_square[K] = 1/sum_of_square
+	print("time for square error %d %s: %.2f" % (K, filename, time()-t0))
+
 
 print("scores: ")
 print(scores)
