@@ -99,6 +99,8 @@ del df
 
 # # SVM
 
+print('start training.')
+
 # In[16]:
 
 from sklearn import svm
@@ -110,7 +112,6 @@ clf = svm.LinearSVC(max_iter = 300000)
 
 
 # In[ ]:
-print('start training.')
 
 clf.fit(train_x, train_y)
 
