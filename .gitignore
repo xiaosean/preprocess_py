@@ -1,0 +1,12 @@
+mailerWithUtf8.py
+*.csv
+*.txt
+*.html
+*.libsvm
+*.zip
+*.pyc
+*.npy
+*.7z
+*.pkl
+*.feather
+*-checkpoint*
