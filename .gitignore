@@ -10,3 +10,4 @@ mailerWithUtf8.py
 *.pkl
 *.feather
 *-checkpoint*
+*.pkl
