@@ -7,6 +7,7 @@ import os.path
 import numpy as np
 import pandas as pd
 import time
+import pyodbc
 
 
 # In[2]:
@@ -37,11 +38,13 @@ def write_to_log(msg):
 
 print("start marketing_filter_columns.py")
 write_to_log("start marketing_filter_columns.py")
+con = pyodbc.connect('Driver=Teradata;DBCName=10.68.64.141;UID=V_CSM;PWD=qazwsx')
+con.setencoding(encoding = 'utf-8')
 
 
 # # Load path configure
 
-# In[5]:
+# In[18]:
 
 write_to_log("Start load path configure")
 table_dict = get_table_path()
@@ -52,6 +55,8 @@ TELEGRAM_MO_FILE = table_dict["TELEGRAM_CDR_MO_AGGR_FILE"]
 CWC_FILE = table_dict["CWC_TABLE"]
 GROUP_ID_FILE = table_dict["GROUP_ID_FILE"]
 OUT_FILENAME = table_dict["OUT_FILENAME"]
+month = table_dict["MONTH"]
+year = table_dict["YEAR"]
 write_to_log("Finish load path configure")
 
 
@@ -68,33 +73,31 @@ write_to_log("Finish load path configure")
 # OUT_FILENAME="mrk_picked_with_group_id.csv"
 
 
-# In[7]:
+# In[8]:
 
 # read csv file and print cost time
 t0 = time.time()
-# df = pd.read_csv(relative_filename, error_bad_lines=False)
-# df = pd.read_csv(relative_filename, usecols = wants_cols, error_bad_lines=False)
-# df = pd.read_csv(relative_filename, usecols = wants_cols, error_bad_lines=False, nrows = 100000)
-# df = pd.read_csv(relative_filename, error_bad_lines=False)
-# df = pd.read_csv(relative_filename, error_bad_lines=False)
+query_str = "sel * from CSM_PROJECT." + "MDS_ACTIVE_MLY_567"
+query_where = ' where extract(month from DATA_MONTH) = ' + month + " AND SUBSCR_STATUS_CODE = \'A\' AND RPS_NAME = \'CONSUMER MOBILITY\' AND PTY_CBU_PO_CNT = 1"
+# query_where = ' where extract(month from DATA_MONTH) = ' + month
+query_sample = " sample 10"
+# df1 = pd.read_sql(query_str, con)
+df = pd.read_sql(query_str + query_where + query_sample, con)
+# df = pd.read_csv(MDS_FILE, sep  = ',', error_bad_lines=False, nrows = 1)
 
-# df = pd.read_csv(relative_filename, error_bad_lines=False)
-# df = pd.read_csv(relative_filename, usecols = wants_cols, sep  = '\t', error_bad_lines=False)
-df = pd.read_csv(MDS_FILE, sep  = ',', error_bad_lines=False, nrows = 1)
 
-# df = pd.read_csv(relative_filename, error_bad_lines=False)
-# df = pd.read_csv(relative_filename, error_bad_lines=False)
+
 write_to_log("time for read csv: %.2f" % (time.time()-t0))
 
 
-# In[8]:
+# In[10]:
 
 df_cols = list(df.columns)
 
 
 # # Drop Column List
 
-# In[9]:
+# In[11]:
 
 # saving money id bcz it will merge group
 # MINING_DW_SUBSCR_NO
@@ -279,7 +282,7 @@ CURR_BILL_PLAN_NAME
 """
 
 
-# In[10]:
+# In[12]:
 
 
 # 因為之後telegram的會併入新的表 原本的有問題
@@ -288,7 +291,7 @@ drop_list = drop_str.split("\n")
 drop_list = [x for x in drop_list if x != ""]
 
 
-# In[11]:
+# In[13]:
 
 # for col in drop_list:
 #     try:
@@ -297,7 +300,7 @@ drop_list = [x for x in drop_list if x != ""]
 #         print("col = %s is not in this table" % col)
 
 
-# In[12]:
+# In[14]:
 
 want_cols = list(set(df.columns)-set(drop_list))
 
@@ -314,7 +317,8 @@ t0 = time.time()
 
 # df = pd.read_csv(relative_filename, error_bad_lines=False)
 # df = pd.read_csv(relative_filename, usecols = wants_cols, sep  = '\t', error_bad_lines=False)
-df = pd.read_csv(MDS_FILE, sep  = ',', error_bad_lines=False, usecols=want_cols)
+df = pd.read_sql(query_str + query_where, con)
+# df = pd.read_csv(MDS_FILE, sep  = ',', error_bad_lines=False, usecols=want_cols)
 
 # df = pd.read_csv(relative_filename, error_bad_lines=False)
 # df = pd.read_csv(relative_filename, error_bad_lines=False)
@@ -523,7 +527,7 @@ df = df.drop('L3M_AVG_VAS_MB', axis = 1)
 
 # # combine 3大2小
 
-# In[28]:
+# In[15]:
 
 write_to_log("start combine 3大2小")
 
@@ -532,23 +536,38 @@ write_to_log("start combine 3大2小")
 
 telegram_df = pd.read_csv(TELEGRAM_MT_FILE, error_bad_lines=False)
 telegram_df = telegram_df.drop("DATA_MONTH", axis = 1)
+try:
+    telegram_df = telegram_df.drop("DATA_MONTH", axis = 1)
+except:
+    write_to_log("telegram_mt_df  no month")
 df = pd.merge(df, telegram_df, on='MINING_DW_SUBSCR_NO', how='left')
 
 
-# In[30]:
+# In[28]:
 
 telegram_df = pd.read_csv(TELEGRAM_MO_FILE, error_bad_lines=False)
-telegram_df = telegram_df.drop("DATA_MONTH", axis = 1)
+try:
+    telegram_df = telegram_df.drop("DATA_MONTH", axis = 1)
+except:
+    write_to_log("telegram_mo_df  no month")
 df = pd.merge(df, telegram_df, on='MINING_DW_SUBSCR_NO', how='left')
 
 
 # # 語音 mo + mt 
 
-# In[32]:
+# In[25]:
 
 write_to_log("start combine CWC")
-cwc_df = pd.read_csv(CWC_FILE, error_bad_lines=False)
-cwc_df = cwc_df[cwc_df["DATA_MONTH"] == int(DATA_MONTH)]
+month_col_name = "DATA_MONTH"
+query_str = "sel * from CSM_PROJECT." + "CWC_CATG_CNT_VW"
+if len(month) == 1:
+    query_where = ' where  DATA_MONTH = ' + year + '0' + month
+else:
+    query_where = ' where  DATA_MONTH = ' + year + month
+
+cwc_df = pd.read_sql(query_str + query_where, con)
+# cwc_df = pd.read_csv(CWC_FILE, error_bad_lines=False)
+# cwc_df = cwc_df[cwc_df["DATA_MONTH"] == int(DATA_MONTH)]
 cwc_df = cwc_df.drop("CURR_SUBSCR_ID", axis = 1)
 cwc_df = cwc_df.drop("DATA_MONTH", axis = 1)
 
@@ -559,18 +578,18 @@ df = pd.merge(df, cwc_df, on='MINING_DW_SUBSCR_NO', how='left')
 
 # # Transfer to 相等深度(Equal-Frequency-Interval)裝箱法
 
-# In[33]:
+# In[29]:
 
 def tranferEFI(df_col, div_num = 3):
     return pd.qcut(df_col, div_num, labels=["L","M","H"], retbins = True)
 
 
-# In[34]:
+# In[30]:
 
 qcut_info = ""
 
 
-# In[35]:
+# In[31]:
 
 q_cut_cols = ['DATA_USAGE_MB', 'MOC_DUR', 'MTC_DUR']
 for col in q_cut_cols:
@@ -578,7 +597,7 @@ for col in q_cut_cols:
     qcut_info += col + "\n" +str(cut_info) + "\n"
 
 
-# In[36]:
+# In[32]:
 
 with open("./marketing_q_cut.txt", "w") as text_file:
     text_file.write(qcut_info)

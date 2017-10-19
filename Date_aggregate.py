@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[58]:
+# In[13]:
 
 import os.path
 import numpy as np
@@ -10,15 +10,16 @@ import time
 import os
 from os import listdir
 from os.path import isfile, join
+import pyodbc
 
 
-# In[59]:
+# In[14]:
 
 def file_csv_list(target_path):
     return [f for f in listdir(target_path) if isfile(join(target_path, f))]
 
 
-# In[78]:
+# In[15]:
 
 def read_csv(filename):
     # read revise csv file and print cost time
@@ -28,7 +29,7 @@ def read_csv(filename):
     return df
 
 
-# In[79]:
+# In[16]:
 
 def remove_date_column(df):
     # we don't use VOICE_DATE/VOICE_MONTH bcz it is a monthly data
@@ -44,7 +45,7 @@ def remove_date_column(df):
     return df
 
 
-# In[80]:
+# In[17]:
 
 def save_dataframe(df, out_filename):
    # write to csv and no index
@@ -55,7 +56,7 @@ def save_dataframe(df, out_filename):
     write_to_log("time for output csv file: %.2f" % (time.time()-t0))
 
 
-# In[81]:
+# In[18]:
 
 def get_table_path():
     with open('./preprocess_path_file.txt') as f:
@@ -71,7 +72,7 @@ def get_table_path():
     return table_dict
 
 
-# In[82]:
+# In[19]:
 
 def write_to_log(msg):
     current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(time.time()))
@@ -84,22 +85,24 @@ def write_to_log(msg):
 
 
 
-# In[83]:
+# In[20]:
 
 print("Start Date_aggregate.py")
 write_to_log("Start Date_aggregate.py")
 write_to_log("Start load path configure")
 table_dict = get_table_path()
 NEED_AGGR_CSV_PATH = table_dict["NEED_AGGR_CSV_PATH"]
+month = table_dict["MONTH"]
 write_to_log("Finish load path configure")
 
 
-# In[ ]:
+# In[21]:
+
+con = pyodbc.connect('Driver=Teradata;DBCName=10.68.64.141;UID=V_CSM;PWD=qazwsx')
+con.setencoding(encoding = 'utf-8')
 
 
-
-
-# In[84]:
+# In[22]:
 
 # set configure
 # path = "../DATA_FULL/"
@@ -119,24 +122,38 @@ if not os.path.exists(out_path):
 
 
 
-# In[85]:
+# In[27]:
 
-for filename in file_csv_list(path):
-    if ".csv" in filename:
-        filename_none_postfix = filename[:-4]
-        out_filename =  out_path + filename_none_postfix + "_aggregate"
-        df = read_csv(path + filename)
-        df = remove_date_column(df)
-        df = df.groupby('MINING_DW_SUBSCR_NO').sum()
-        if "HOUR" in filename:
-            for i in df.columns:
-                if(i != 'MINING_DW_SUBSCR_NO'):
-                    df[i] /= 30
+# for filename in file_csv_list(path):
+#     if ".csv" in filename:
 
-        save_dataframe(df, out_filename)
+month_col_name = "DATA_MONTH"
+query_str = "sel * from CSM_PROJECT." + "dm_subscr_moc_mly"
+query_where = ' where extract(month from DATA_MONTH) = ' + month
+# filename_none_postfix = filename[:-4]
+out_filename =  out_path + "dm_subscr_moc_mly_COMPLETED_month"
+# df = read_csv(path + filename)
+df = pd.read_sql(query_str + query_where, con)
+# df = remove_date_column(df)
+df = df.groupby('MINING_DW_SUBSCR_NO').sum()
+save_dataframe(df, out_filename)
 
 
-# In[86]:
+# In[25]:
+
+month_col_name = "DATA_MONTH"
+query_str = "sel * from CSM_PROJECT." + "dm_subscr_mtc_mly"
+query_where = ' where extract(month from DATA_MONTH) = ' + month
+# filename_none_postfix = filename[:-4]
+out_filename =  out_path + "dm_subscr_mtc_mly_COMPLETED_month"
+df = pd.read_sql(query_str + query_where, con)
+# df = read_csv(path + filename)
+# df = remove_date_column(df)
+df = df.groupby('MINING_DW_SUBSCR_NO').sum()
+save_dataframe(df, out_filename)
+
+
+# In[26]:
 
 print("Finish Date_aggregate.py")
 write_to_log("Finish Date_aggregate.py")
