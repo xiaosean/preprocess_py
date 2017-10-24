@@ -1,0 +1,17 @@
+Wed 25 Oct 2017 05:22:09 WARNING <ipython-input-41-b8db2066aa54> 3 13075 warn message
+Wed 25 Oct 2017 05:22:09 ERROR <ipython-input-41-b8db2066aa54> 4 13075 error message
+Wed 25 Oct 2017 05:22:09 CRITICAL <ipython-input-41-b8db2066aa54> 5 13075 critical message
+Wed 25 Oct 2017 05:22:31 WARNING <ipython-input-42-b8db2066aa54> 3 13075 warn message
+Wed 25 Oct 2017 05:22:31 ERROR <ipython-input-42-b8db2066aa54> 4 13075 error message
+Wed 25 Oct 2017 05:22:31 CRITICAL <ipython-input-42-b8db2066aa54> 5 13075 critical message
+Wed 25 Oct 2017 05:22:39 WARNING <ipython-input-44-b8db2066aa54> 3 13075 warn message
+Wed 25 Oct 2017 05:22:39 WARNING <ipython-input-44-b8db2066aa54> 3 13075 warn message
+Wed 25 Oct 2017 05:22:39 ERROR <ipython-input-44-b8db2066aa54> 4 13075 error message
+Wed 25 Oct 2017 05:22:39 ERROR <ipython-input-44-b8db2066aa54> 4 13075 error message
+Wed 25 Oct 2017 05:22:39 CRITICAL <ipython-input-44-b8db2066aa54> 5 13075 critical message
+Wed 25 Oct 2017 05:22:39 CRITICAL <ipython-input-44-b8db2066aa54> 5 13075 critical message
+Wed 25 Oct 2017 05:28:50 ERROR <ipython-input-13-cf616152d41d> 8 13009 File b'../DATA_FULL/output_FYSP_HTTPDR_CATG_WEEKOF_MLY_2017-04-01.csv' does not exist
+Wed 25 Oct 2017 05:28:50 ERROR <ipython-input-13-cf616152d41d> 8 13009 File b'../DATA_FULL/output_FYSP_HTTPDR_CATG_WEEKOF_MLY_2017-04-01.csv' does not exist
+Wed 25 Oct 2017 05:29:11 ERROR <ipython-input-14-63a9fa4bb9d6> 8 13009 File b'../DATA_FULL/output_FYSP_HTTPDR_CATG_WEEKOF_MLY_2017-04-01.csv' does not exist
+Wed 25 Oct 2017 05:29:11 ERROR <ipython-input-14-63a9fa4bb9d6> 8 13009 File b'../DATA_FULL/output_FYSP_HTTPDR_CATG_WEEKOF_MLY_2017-04-01.csv' does not exist
+Wed 25 Oct 2017 05:36:01 ERROR <ipython-input-7-6cdebfd9476b> 6 13293 name 'pyodbc' is not defined
