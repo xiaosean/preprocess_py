@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[1]:
+# In[2]:
 
 import os.path
 import numpy as np
@@ -10,23 +10,30 @@ import time
 import pyodbc
 
 
-# In[2]:
+# In[3]:
 
 def get_table_path():
-    with open('./preprocess_path_file.txt') as f:
-        read_data = f.read()
-        read_data = read_data.replace("\r","")
-        read_data = read_data.replace('"',"")
-        read_data = read_data.replace("\n","")
-    table_list = read_data.split(",")
-    table_dict = {}
-    for table in table_list:
-        table_name, table_path = table.split("=")
-        table_dict[table_name] = table_path
-    return table_dict
+    try:
+        logger.info("read preprocess_path_file.txt") #写入错误日志
+        with open('./preprocess_path_file.txt') as f:
+            read_data = f.read()
+            read_data = read_data.replace("\r","")
+            read_data = read_data.replace('"',"")
+            read_data = read_data.replace("\n","")
+            logger.info("txt split by ,") #写入错误日志
+            table_list = read_data.split(",")
+            table_dict = {}
+            logger.info("load dict") #写入错误日志
+            for table in table_list:
+                table_name, table_path = table.split("=")
+                table_dict[table_name] = table_path
+            return table_dict
+    except Exception as e:
+        logger.error(e) #写入错误日志
+    
 
 
-# In[3]:
+# In[4]:
 
 def write_to_log(msg):
     current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(time.time()))
@@ -34,10 +41,42 @@ def write_to_log(msg):
         log_file.write(current_time + "\t" + msg + "\n")
 
 
+# # Logger config
+
+# In[5]:
+
+
+import logging
+import os
+# create logger
+LOG_DIR = "LOG"
+if not os.path.exists(os.path.join(LOG_DIR)):
+    os.makedirs(LOG_DIR)
+log_path = os.path.join(".",LOG_DIR, "logging.log")
+
+logger_name = "test"
+logger = logging.getLogger(logger_name)
+logger.setLevel(logging.DEBUG)
+
+# create file handler
+fh = logging.FileHandler(log_path)
+fh.setLevel(logging.WARN)
+
+# create formatter
+fmt = "%(asctime)-15s %(levelname)s %(filename)s %(lineno)d %(process)d %(message)s"
+datefmt = "%a %d %b %Y %H:%M:%S"
+formatter = logging.Formatter(fmt, datefmt)
+
+# add handler and formatter to logger
+fh.setFormatter(formatter)
+logger.addHandler(fh)
+
+
 # In[4]:
 
+logger.info("start marketing_filter_columns.py")
 print("start marketing_filter_columns.py")
-write_to_log("start marketing_filter_columns.py")
+logger.info("start connect pyodbc")
 con = pyodbc.connect('Driver=Teradata;DBCName=10.68.64.141;UID=V_CSM;PWD=qazwsx')
 con.setencoding(encoding = 'utf-8')
 
@@ -46,7 +85,7 @@ con.setencoding(encoding = 'utf-8')
 
 # In[18]:
 
-write_to_log("Start load path configure")
+logger.info("Start load path configure")
 table_dict = get_table_path()
 DATA_MONTH = table_dict["DATA_MONTH"]
 MDS_FILE = table_dict["MDS_TABLE"]
@@ -58,6 +97,7 @@ OUT_FILENAME = table_dict["OUT_FILENAME"]
 month = table_dict["MONTH"]
 year = table_dict["YEAR"]
 write_to_log("Finish load path configure")
+logger.info("Finish load path configure")
 
 
 # # configure example
@@ -75,19 +115,22 @@ write_to_log("Finish load path configure")
 
 # In[8]:
 
-# read csv file and print cost time
-t0 = time.time()
-query_str = "sel * from CSM_PROJECT." + "MDS_ACTIVE_MLY_567"
-query_where = ' where extract(month from DATA_MONTH) = ' + month + " AND SUBSCR_STATUS_CODE = \'A\' AND RPS_NAME = \'CONSUMER MOBILITY\' AND PTY_CBU_PO_CNT = 1"
-# query_where = ' where extract(month from DATA_MONTH) = ' + month
-query_sample = " sample 10"
-# df1 = pd.read_sql(query_str, con)
-df = pd.read_sql(query_str + query_where + query_sample, con)
-# df = pd.read_csv(MDS_FILE, sep  = ',', error_bad_lines=False, nrows = 1)
-
-
-
-write_to_log("time for read csv: %.2f" % (time.time()-t0))
+try:
+    
+    # read csv file and print cost time
+    t0 = time.time()
+    query_str = "sel * from CSM_PROJECT." + "MDS_ACTIVE_MLY_567"
+    query_where = ' where extract(month from DATA_MONTH) = ' + month + " AND SUBSCR_STATUS_CODE = \'A\' AND RPS_NAME = \'CONSUMER MOBILITY\' AND PTY_CBU_PO_CNT = 1"
+    # query_where = ' where extract(month from DATA_MONTH) = ' + month
+    query_sample = " sample 10"
+    # df1 = pd.read_sql(query_str, con)
+    logger.info("QUERY STR => %s" % query_str + query_where + query_sample)
+    logger.info("START QUERY => %s" % query_str + query_where + query_sample)
+    df = pd.read_sql(query_str + query_where + query_sample, con)
+    # df = pd.read_csv(MDS_FILE, sep  = ',', error_bad_lines=False, nrows = 1)
+    logger.info("time for read csv: %.2f" % (time.time()-t0))
+except Exception as e:
+    logger.error(e) #写入错误日志
 
 
 # In[10]:
@@ -307,23 +350,21 @@ want_cols = list(set(df.columns)-set(drop_list))
 
 # In[13]:
 
-# read csv file and print cost time
-t0 = time.time()
-# df = pd.read_csv(relative_filename, error_bad_lines=False)
-# df = pd.read_csv(relative_filename, usecols = wants_cols, error_bad_lines=False)
-# df = pd.read_csv(relative_filename, usecols = wants_cols, error_bad_lines=False, nrows = 100000)
-# df = pd.read_csv(relative_filename, error_bad_lines=False)
-# df = pd.read_csv(relative_filename, error_bad_lines=False)
+try:
+    # read csv file and print cost time
+    t0 = time.time()
+    # df = pd.read_csv(relative_filename, error_bad_lines=False)
+    # df = pd.read_csv(relative_filename, usecols = wants_cols, sep  = '\t', error_bad_lines=False)
+    logger.info("QUERY STR => %s" % query_str + query_where)
+    logger.info("START QUERY => %s" % query_str + query_where)
 
-# df = pd.read_csv(relative_filename, error_bad_lines=False)
-# df = pd.read_csv(relative_filename, usecols = wants_cols, sep  = '\t', error_bad_lines=False)
-df = pd.read_sql(query_str + query_where, con)
-# df = pd.read_csv(MDS_FILE, sep  = ',', error_bad_lines=False, usecols=want_cols)
+    df = pd.read_sql(query_str + query_where, con)
+    # df = pd.read_csv(MDS_FILE, sep  = ',', error_bad_lines=False, usecols=want_cols)
 
-# df = pd.read_csv(relative_filename, error_bad_lines=False)
-# df = pd.read_csv(relative_filename, error_bad_lines=False)
-write_to_log("time for read csv: %.2f" % (time.time()-t0))
-write_to_log("finish read MDS csv")
+    logger.info("time for read csv: %.2f" % (time.time()-t0))
+    logger.info("finish read MDS csv")
+except Exception as e:
+    logger.error(e) #写入错误日志
 
 
 # In[14]:
@@ -335,7 +376,8 @@ df = df.fillna('?')
 
 # In[15]:
 
-write_to_log("start replace space/? to random value")
+logger.info("start replace space/? to random value")
+
 random_fill_str = """
 GENDER_CODE
 IMEI_MFG_NAME
@@ -354,17 +396,20 @@ random_fill_list = [x for x in random_fill_list if x != ""]
 
 # In[16]:
 
-question_item = ["?", " "]
-for col in random_fill_list:
-    for q_item in question_item:
-        q_item_count = len(df[df[col] == q_item])
-#         print("'"+ q_item + "' count =", q_item_count)
-        if q_item_count > 0:
-            sample_list = df[df[col] != q_item].sample(q_item_count)
-            df.loc[df[df[col] == q_item].index, col] = sample_list[col].values
-#     print("? count =", len(df[df[col] == "?"]))
-#     print("space count =", len(df[df[col] == " "]))
-#     print(col, "done")
+try:
+    question_item = ["?", " "]
+    for col in random_fill_list:
+        for q_item in question_item:
+            q_item_count = len(df[df[col] == q_item])
+    #         print("'"+ q_item + "' count =", q_item_count)
+            if q_item_count > 0:
+                sample_list = df[df[col] != q_item].sample(q_item_count)
+                df.loc[df[df[col] == q_item].index, col] = sample_list[col].values
+    #     print("? count =", len(df[df[col] == "?"]))
+    #     print("space count =", len(df[df[col] == " "]))
+    #     print(col, "done")
+except Exception as e:
+    logger.error(e) #写入错误日志
 
 
 # # fill up the specific value
@@ -382,7 +427,6 @@ for col in random_fill_list:
 # specific_fill_str = specific_fill_str.split("\n")
 # specific_fill_list = [x for x in specific_fill_list if x != ""]
 # specific_fill_list
-write_to_log("start fill up the specific value")
 
 specific_dict = {
     "PROM_CURR_PROMOTION_TYPE" : "others",
@@ -409,8 +453,12 @@ specific_dict = {
 
 # In[18]:
 
-for col, value in specific_dict.items():
-    df.loc[df[df[col] == "?"].index, col] = value   
+try:
+    logger.info("start fill up the specific value")
+    for col, value in specific_dict.items():
+        df.loc[df[df[col] == "?"].index, col] = value   
+except Exception as e:
+    logger.error(e) #写入错误日志
 
 
 # In[ ]:
@@ -422,11 +470,14 @@ for col, value in specific_dict.items():
 
 # In[19]:
 
-write_to_log("start IMEI_BAND fill up 3G or 4G")
-col = "IMEI_BAND"
-q_item_count = len(df[df[col] == "?"])
-sample_list = df[(df[col] == "3G") | (df[col] == "4G")].sample(q_item_count)
-df.loc[df[df[col] == "?"].index, col] = sample_list 
+logger.info("start IMEI_BAND fill up 3G or 4G")
+try:
+    col = "IMEI_BAND"
+    q_item_count = len(df[df[col] == "?"])
+    sample_list = df[(df[col] == "3G") | (df[col] == "4G")].sample(q_item_count)
+    df.loc[df[df[col] == "?"].index, col] = sample_list 
+except Exception as e:
+    logger.error(e) #写入错误日志
 
 
 # # TODO:ORIG_OPR_ID merge telegram 
@@ -496,84 +547,98 @@ df.loc[df[df[col] == "?"].index, col] = df[col].describe().top
 
 # In[25]:
 
+logger.info("start age fill up avg")
 col = "AGE"
-avg = sum(df[df[col] != "?"][col].apply(np.int64)) / len(df[df[col] != "?"])
-df.loc[df[df[col] == "?"].index, col] = avg
+try:
+    avg = sum(df[df[col] != "?"][col].apply(np.int64)) / len(df[df[col] != "?"])
+    df.loc[df[df[col] == "?"].index, col] = avg
+except Exception as e:
+    logger.error(e) #写入错误日志
 
 
 # # AMT 如果是負數的話 補0
 
 # In[26]:
 
-for col in df.columns:
-    if(col.endswith("AMT")):
-#         print(col)
-#         print(df[col].describe())
-        try:
+logger.info("start age fill up avg")
+try:
+    for col in df.columns:
+        if(col.endswith("AMT")):
+    #         print(col)
+    #         print(df[col].describe())
             df[col] = df[col].apply(np.float64)
             df.loc[df[df[col] < 0].index, col] = 0
-        except:
-            write_to_log("this col => %s no only value" % col)
+except:
+    logger.error(e) #写入错误日志
 
 
 # # drop VAS
 
 # In[27]:
 
-write_to_log("start drop vas")
-df = df.drop('VAS_AMT', axis = 1)
-df = df.drop('L3M_AVG_VAS_MB', axis = 1)
+logger.info("start drop vas") #写入错误日志
+
+try:
+    df = df.drop('VAS_AMT', axis = 1)
+    df = df.drop('L3M_AVG_VAS_MB', axis = 1)
+except:
+    logger.error(e) #写入错误日志
 
 
 # # combine 3大2小
 
 # In[15]:
 
-write_to_log("start combine 3大2小")
+logger.info("start combine 3大2小")
 
 
 # In[29]:
 
-telegram_df = pd.read_csv(TELEGRAM_MT_FILE, error_bad_lines=False)
-telegram_df = telegram_df.drop("DATA_MONTH", axis = 1)
 try:
+    telegram_df = pd.read_csv(TELEGRAM_MT_FILE, error_bad_lines=False)
     telegram_df = telegram_df.drop("DATA_MONTH", axis = 1)
-except:
-    write_to_log("telegram_mt_df  no month")
-df = pd.merge(df, telegram_df, on='MINING_DW_SUBSCR_NO', how='left')
+    df = pd.merge(df, telegram_df, on='MINING_DW_SUBSCR_NO', how='left')
+except Exception as e:
+    logger.error(e) #写入错误日志
+#     write_to_log("telegram_mt_df  no month")
 
 
 # In[28]:
 
-telegram_df = pd.read_csv(TELEGRAM_MO_FILE, error_bad_lines=False)
 try:
+    telegram_df = pd.read_csv(TELEGRAM_MO_FILE, error_bad_lines=False)
     telegram_df = telegram_df.drop("DATA_MONTH", axis = 1)
-except:
-    write_to_log("telegram_mo_df  no month")
-df = pd.merge(df, telegram_df, on='MINING_DW_SUBSCR_NO', how='left')
+    df = pd.merge(df, telegram_df, on='MINING_DW_SUBSCR_NO', how='left')
+except Exception as e:
+    logger.error(e) #写入错误日志
+#     write_to_log("telegram_mo_df  no month")
+
 
 
 # # 語音 mo + mt 
 
 # In[25]:
 
-write_to_log("start combine CWC")
-month_col_name = "DATA_MONTH"
-query_str = "sel * from CSM_PROJECT." + "CWC_CATG_CNT_VW"
-if len(month) == 1:
-    query_where = ' where  DATA_MONTH = ' + year + '0' + month
-else:
-    query_where = ' where  DATA_MONTH = ' + year + month
+try:
+    logger.info("start combine CWC") #写入错误日志
+    month_col_name = "DATA_MONTH"
+    query_str = "sel * from CSM_PROJECT." + "CWC_CATG_CNT_VW"
+    query_where = ' where  DATA_MONTH = ' + year + '%02d' % month
+    logger.info("QUERY STR => %s" % query_str + query_where)
+    logger.info("START QUERY => %s" % query_str + query_where)
 
-cwc_df = pd.read_sql(query_str + query_where, con)
-# cwc_df = pd.read_csv(CWC_FILE, error_bad_lines=False)
-# cwc_df = cwc_df[cwc_df["DATA_MONTH"] == int(DATA_MONTH)]
-cwc_df = cwc_df.drop("CURR_SUBSCR_ID", axis = 1)
-cwc_df = cwc_df.drop("DATA_MONTH", axis = 1)
+    cwc_df = pd.read_sql(query_str + query_where, con)
+    # cwc_df = pd.read_csv(CWC_FILE, error_bad_lines=False)
+    # cwc_df = cwc_df[cwc_df["DATA_MONTH"] == int(DATA_MONTH)]
+    logger.info("START Drop CURR_SUBSCR_ID and DATA_MONTH")
+    cwc_df = cwc_df.drop("CURR_SUBSCR_ID", axis = 1)
+    cwc_df = cwc_df.drop("DATA_MONTH", axis = 1)
 
-# if("Groups" in list(df.columns)):
-#     df = df.drop("Groups", axis = 1)
-df = pd.merge(df, cwc_df, on='MINING_DW_SUBSCR_NO', how='left')
+    # if("Groups" in list(df.columns)):
+    #     df = df.drop("Groups", axis = 1)
+    df = pd.merge(df, cwc_df, on='MINING_DW_SUBSCR_NO', how='left')
+except Exception as e:
+    logger.error(e) #写入错误日志
 
 
 # # Transfer to 相等深度(Equal-Frequency-Interval)裝箱法
@@ -591,16 +656,20 @@ qcut_info = ""
 
 # In[31]:
 
-q_cut_cols = ['DATA_USAGE_MB', 'MOC_DUR', 'MTC_DUR']
-for col in q_cut_cols:
-    df[col], cut_info = tranferEFI(df[col])
-    qcut_info += col + "\n" +str(cut_info) + "\n"
+logger.info("START q_cut_cols")
+try:
+    q_cut_cols = ['DATA_USAGE_MB', 'MOC_DUR', 'MTC_DUR']
+    for col in q_cut_cols:
+        df[col], cut_info = tranferEFI(df[col])
+        qcut_info += col + "\n" +str(cut_info) + "\n"
+except Exception as e:
+    logger.error(e) #写入错误日志
 
 
 # In[32]:
 
-with open("./marketing_q_cut.txt", "w") as text_file:
-    text_file.write(qcut_info)
+# with open("./marketing_q_cut.txt", "w") as text_file:
+#     text_file.write(qcut_info)
 
 
 # # 0804信件說要刪除的部分
@@ -618,19 +687,25 @@ MTC_CNT
 NET_INV_AMT
 VOICE_RC_AMT
 """
-drop_list = mail_say_delete_str.split("\n")
-drop_list = [x for x in drop_list if x != ""]
-want_cols = list(set(df.columns)-set(drop_list))
-df = df[want_cols]
+try:
+    drop_list = mail_say_delete_str.split("\n")
+    drop_list = [x for x in drop_list if x != ""]
+    want_cols = list(set(df.columns)-set(drop_list))
+    df = df[want_cols]
+except Exception as e:
+    logger.error(e) #写入错误日志
 
 
 # In[38]:
 
-write_to_log("start load GROUP ID FILE")
-group_df = pd.read_csv(GROUP_ID_FILE, error_bad_lines=False, usecols = ["MINING_DW_SUBSCR_NO", "Groups"])
-if("Groups" in list(df.columns)):
-    df = df.drop("Groups", axis = 1)
-df = pd.merge(df, group_df, on='MINING_DW_SUBSCR_NO', how='right')
+logger.info("start load GROUP ID FILE")
+try:
+    group_df = pd.read_csv(GROUP_ID_FILE, error_bad_lines=False, usecols = ["MINING_DW_SUBSCR_NO", "Groups"])
+    if("Groups" in list(df.columns)):
+        df = df.drop("Groups", axis = 1)
+    df = pd.merge(df, group_df, on='MINING_DW_SUBSCR_NO', how='right')
+except Exception as e:
+    logger.error(e) #写入错误日志
 
 
 # In[39]:
@@ -640,24 +715,31 @@ df = pd.merge(df, group_df, on='MINING_DW_SUBSCR_NO', how='right')
 
 # In[40]:
 
-write_to_log("start drop MINING_DW_SUBSCR_NO")
-df = df.drop("MINING_DW_SUBSCR_NO", axis = 1)
+logger.info("start drop MINING_DW_SUBSCR_NO")
+try:
+    df = df.drop("MINING_DW_SUBSCR_NO", axis = 1)
+except Exception as e:
+    logger.error(e) #写入错误日志
 
 
 # In[42]:
 
-write_to_log("start output file %s" % OUT_FILENAME)
-print("output file %s", OUT_FILENAME)
-
-t0 = time.time()
-df.to_csv(OUT_FILENAME, index=False, encoding='utf-8')
-write_to_log("time for output csv file: %.2f" % (time.time()-t0))
+# write_to_log("start output file %s" % OUT_FILENAME)
+logger.info("start drop MINING_DW_SUBSCR_NO")
+# print("output file %s", OUT_FILENAME)
+try:
+    t0 = time.time()
+    df.to_csv(OUT_FILENAME, index=False, encoding='utf-8')
+    logger.info("start drop MINING_DW_SUBSCR_NO")
+except Exception as e:
+    logger.error(e) #写入错误日志
 
 
 # In[43]:
 
 print("finish marketing_filter_columns.py")
-write_to_log("finish marketing_filter_columns.py")
+# write_to_log("finish marketing_filter_columns.py")
+logger.info("finish marketing_filter_columns.py")
 
 
 # In[ ]:
