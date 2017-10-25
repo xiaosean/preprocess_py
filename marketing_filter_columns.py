@@ -357,7 +357,7 @@ try:
     # df = pd.read_csv(relative_filename, usecols = wants_cols, sep  = '\t', error_bad_lines=False)
     logger.info("QUERY STR => %s" % query_str + query_where)
     logger.info("START QUERY => %s" % query_str + query_where)
-
+    print("START QUERY => %s" % query_str + query_where)
     df = pd.read_sql(query_str + query_where, con)
     # df = pd.read_csv(MDS_FILE, sep  = ',', error_bad_lines=False, usecols=want_cols)
 
@@ -474,8 +474,9 @@ logger.info("start IMEI_BAND fill up 3G or 4G")
 try:
     col = "IMEI_BAND"
     q_item_count = len(df[df[col] == "?"])
-    sample_list = df[(df[col] == "3G") | (df[col] == "4G")].sample(q_item_count)
-    df.loc[df[df[col] == "?"].index, col] = sample_list 
+    if(q_item_count > 0):
+        sample_list = df[(df[col] == "3G") | (df[col] == "4G")].sample(q_item_count)
+        df.loc[df[df[col] == "?"].index, col] = sample_list 
 except Exception as e:
     logger.error(e) #写入错误日志
 
@@ -626,6 +627,7 @@ try:
     query_where = ' where  DATA_MONTH = ' + year + '%02d' % month
     logger.info("QUERY STR => %s" % query_str + query_where)
     logger.info("START QUERY => %s" % query_str + query_where)
+    print("START QUERY => %s" % query_str + query_where)
 
     cwc_df = pd.read_sql(query_str + query_where, con)
     # cwc_df = pd.read_csv(CWC_FILE, error_bad_lines=False)
@@ -726,7 +728,7 @@ except Exception as e:
 
 # write_to_log("start output file %s" % OUT_FILENAME)
 logger.info("start drop MINING_DW_SUBSCR_NO")
-# print("output file %s", OUT_FILENAME)
+print("start output file %s", OUT_FILENAME)
 try:
     t0 = time.time()
     df.to_csv(OUT_FILENAME, index=False, encoding='utf-8')

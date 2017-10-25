@@ -183,9 +183,12 @@ try:
     # df = read_csv(path + filename)
     logger.info("QUERY STR => %s" % query_str + query_where)
     logger.info("START QUERY => %s" % query_str + query_where)
+    print("START QUERY => %s" % query_str + query_where)
     df = pd.read_sql(query_str + query_where, con)
     # df = remove_date_column(df)
     logger.info("START groupby MINING_DW_SUBSCR_NO sum")
+        print("START groupby by=> MINING_DW_SUBSCR_NO")
+
     df = df.groupby('MINING_DW_SUBSCR_NO').sum()
     save_dataframe(df, out_filename)
 except Exception as e:
@@ -203,11 +206,12 @@ try:
     out_filename =  out_path + "dm_subscr_mtc_mly_COMPLETED_month"
     logger.info("QUERY STR => %s" % query_str + query_where)
     logger.info("START QUERY => %s" % query_str + query_where)
-
+    print("START QUERY => %s" % query_str + query_where)
     df = pd.read_sql(query_str + query_where, con)
     # df = read_csv(path + filename)
     # df = remove_date_column(df)
     logger.info("START groupby MINING_DW_SUBSCR_NO sum")
+    print("START groupby by=> MINING_DW_SUBSCR_NO")
     df = df.groupby('MINING_DW_SUBSCR_NO').sum()
     save_dataframe(df, out_filename)
 except Exception as e:
@@ -217,7 +221,7 @@ except Exception as e:
 # In[26]:
 
 print("Finish Date_aggregate.py")
-write_to_log("Finish Date_aggregate.py")
+# write_to_log("Finish Date_aggregate.py")
 logger.info("Finish Date_aggregate.py")
 
 
